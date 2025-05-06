@@ -26,14 +26,14 @@ The script requires the following tools:
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/url-health-check.git
-cd url-health-check
+git clone git@github.com:karenmartirosyan1/healthcheck_tools.git
+cd healthcheck_tools
 ```
 
 ### Make the Script Executable
 
 ```bash
-chmod +x health_check.sh
+chmod +x check_endpoint.sh
 ```
 
 ## Usage
@@ -41,21 +41,21 @@ chmod +x health_check.sh
 ### Basic Usage
 
 ```bash
-./health_check.sh -e https://example.com/health
+./check_endpoint.sh -e https://example.com/health
 ```
 **Note:** Writing to `/var/log/` typically requires root privileges. You may need to run the script with `sudo` or specify an alternative log location.
 
 ### Full Options
 
 ```bash
-./health_check.sh -e <endpoint_url> [-s <desired_status>] [-l <log_file_path>] [-f <log_file_name>] [-h]
+./check_endpoint.sh -e <endpoint_url> [-s <desired_status>] [-l <log_file_path>] [-f <log_file_name>] [-h]
 ```
 
 ### Command Line Options
 
 | Option | Long Option | Description | Default |
 |--------|-------------|-------------|---------|
-| `-e` | `--endpoint` | URL to check (required) | - |
+| `-e` | `--endpoint` | URL to check | https://sre-test-assignment.innervate.tech/health.html |
 | `-s` | `--status` | Desired string in response body | "Success" |
 | `-l` | `--logpath` | Directory to store the log file | /var/log/ |
 | `-f` | `--logfile` | Log file name | diagnostics.log |
@@ -65,17 +65,17 @@ chmod +x health_check.sh
 
 Check a specific endpoint:
 ```bash
-./health_check.sh -e https://myservice.example.com/health.html
+./check_endpoint.sh -e https://myservice.example.com/health.html
 ```
 
 Check with custom success keyword:
 ```bash
-./health_check.sh -e https://myservice.example.com/health.html -s "Healthy"
+./check_endpoint.sh -e https://myservice.example.com/health.html -s "Healthy"
 ```
 
 Use custom log location:
 ```bash
-./health_check.sh -e https://myservice.example.com/health.html -l /tmp/ -f my_service_health.log
+./check_endpoint.sh -e https://myservice.example.com/health.html -l /tmp/ -f my_service_health.log
 ```
 
 ## Exit Codes
