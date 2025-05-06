@@ -81,7 +81,7 @@ log() {
 # Function to check required tools
 check_required_tools() {
     local missing_tools=()
-    local required_tools=("curl" "ping" "traceroute" "nslookup")
+    local required_tools=("curl" "ping" "traceroute" "nslookup" "openssl" "nc")
 
     for tool in "${required_tools[@]}"; do
         if ! command -v "$tool" >/dev/null 2>&1; then
@@ -102,25 +102,86 @@ check_required_tools() {
 # Function to perform diagnostics
 perform_diagnostics() {
     local reason="$1"
-    local domain=$(echo "$ENDPOINT" | sed -E 's|https?://([^/]+).*|\1|')
+    local scheme=$(echo "$ENDPOINT" | sed -E 's|^([a-z]+)://.*|\1|')
+    local domain=$(echo "$ENDPOINT" | sed -E 's|https?://([^:/]+).*|\1|')
+    local port=""
 
     log "ERROR: Service check failed - $reason"
     log "INFO: Starting diagnostics"
 
+    # DNS lookup
     log "INFO: DNS lookup results:"
     nslookup "$domain" 2>&1 | while read -r line; do log "  $line"; done
 
+    # Ping
     log "INFO: Ping test results:"
     ping -c 4 "$domain" 2>&1 | while read -r line; do log "  $line"; done
 
+    # Traceroute
     log "INFO: Traceroute results:"
     traceroute -m 15 "$domain" 2>&1 | while read -r line; do log "  $line"; done
 
+    # HTTP headers
     log "INFO: HTTP headers check:"
     curl -I "$ENDPOINT" 2>&1 | while read -r line; do log "  $line"; done
 
-    log "INFO: Diagnostics completed!"
+    # Determine port based on scheme
+    case "$scheme" in
+        https)
+            port=443
+            ;;
+        http)
+            port=80
+            ;;
+        *)
+            log "  ERROR: Unknown scheme '$scheme' — skipping port and SSL checks."
+            ;;
+    esac
 
+    # Port connectivity check
+    if [[ -n "$port" ]]; then
+        log "INFO: Port connectivity check for $domain:$port"
+
+        if nc -z -w5 "$domain" "$port" >/dev/null 2>&1; then
+            log "  Port $port on $domain is reachable."
+        else
+            log "  ERROR: Port $port on $domain is NOT reachable."
+        fi
+    fi
+
+    # SSL certificate check for HTTPS
+    if [[ "$scheme" == "https" ]]; then
+        log "INFO: SSL certificate validity check:"
+
+        local expiry_date
+        expiry_date=$(echo | openssl s_client -servername "$domain" -connect "$domain:$port" 2>/dev/null \
+            | openssl x509 -noout -enddate 2>/dev/null | cut -d= -f2)
+
+        if [[ -z "$expiry_date" ]]; then
+            log "  Could not retrieve certificate expiration date."
+        else
+            log "  Certificate expires on: $expiry_date"
+
+            local expiry_seconds
+            expiry_seconds=$(date -d "$expiry_date" +%s)
+            local now_seconds
+            now_seconds=$(date +%s)
+
+            if (( now_seconds > expiry_seconds )); then
+                log "  ERROR: SSL certificate is EXPIRED!"
+            else
+                local days_left=$(( (expiry_seconds - now_seconds) / 86400 ))
+                log "  Certificate is valid for another $days_left day(s)."
+                if (( days_left < 7 )); then
+                    log "  WARNING: SSL certificate will expire in less than 7 days!"
+                fi
+            fi
+        fi
+    else
+        log "INFO: Skipping SSL certificate check (non-HTTPS endpoint)."
+    fi
+
+    log "INFO: Diagnostics completed."
     exit 1
 }
 
