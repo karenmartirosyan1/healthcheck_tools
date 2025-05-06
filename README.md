@@ -11,6 +11,8 @@ This repository contains a bash script for monitoring URL availability and perfo
   - **ping**: Confirms basic network connectivity to the target host, showing packet loss and latency issues
   - **traceroute**: Maps the full network path to the target, revealing routing problems or bottlenecks
   - **curl**: Examines the server's response headers to identify server-side issues, redirects, or content delivery problems
+  - **nc**: Verifies if the specific port (80/443) is reachable on the target server
+  - **openssl**: For HTTPS endpoints, checks SSL certificate validity, expiration date, and warns about soon-to-expire certificates
 - Detailed logging with timestamps
 - Customizable log file location
 - Command-line options for all parameters
@@ -25,6 +27,8 @@ The script requires the following tools:
 - [ping](https://linux.die.net/man/8/ping) - Network utility to test reachability of hosts
 - [traceroute](https://linux.die.net/man/8/traceroute) - Network diagnostic tool for displaying the route to a destination
 - [nslookup](https://linux.die.net/man/1/nslookup) - Tool to query DNS servers for domain name or IP mapping
+- [nc/netcat](https://linux.die.net/man/1/nc) - TCP/IP Swiss Army knife for port scanning and connectivity tests
+- [openssl](https://linux.die.net/man/1/openssl) - Toolkit for Transport Layer Security (TLS) and Secure Sockets Layer (SSL) protocols
 
 ## Installation
 
@@ -92,6 +96,35 @@ Use custom log location:
 | 10 | Required tools are missing |
 | 11 | Could not create log directory |
 | 12 | Could not create log file |
+
+
+## Diagnostic Methods
+
+When an endpoint check fails, the script automatically performs these diagnostic steps:
+
+1. **DNS Resolution (nslookup)**
+   - **Purpose**: Determines if the domain name can be resolved to an IP address
+   - **Example issue detected**: "Non-existent domain" or incorrect IP resolution
+
+2. **Network Connectivity (ping)**
+   - **Purpose**: Tests basic network connectivity to the target host
+   - **Example issue detected**: High latency, packet loss, or complete host unreachability
+
+3. **Network Path Analysis (traceroute)**
+   - **Purpose**: Traces the route packets take to reach the host
+   - **Example issue detected**: Network timeouts at specific hops or routing loops
+
+4. **HTTP Headers Inspection (curl)**
+   - **Purpose**: Examines the server's HTTP response headers
+   - **Example issue detected**: Unexpected redirects, server errors, or misconfigured Content-Type
+
+5. **Port Connectivity Check (nc/netcat)**
+   - **Purpose**: Verifies if the specific service port (80 for HTTP, 443 for HTTPS) is open and accepting connections
+   - **Example issue detected**: Closed ports, firewalled services, or service not running
+
+6. **SSL Certificate Validation (openssl)**
+   - **Purpose**: For HTTPS endpoints, validates the SSL certificate's validity and expiration status
+   - **Example issue detected**: Expired certificates, certificate chain problems, or imminent expiration (< 7 days)
 
 ## Log File
 
