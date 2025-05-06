@@ -6,12 +6,17 @@ This repository contains a bash script for monitoring URL availability and perfo
 
 - Verifies endpoint availability with HTTP status code 200 check
 - Confirms response body contains expected keyword (default: "Success")
-- Automatically runs diagnostics on failure
+- Automatically runs comprehensive diagnostics on failure:
+  - **nslookup**: Verifies the domain name can be resolved to an IP address, helping identify DNS configuration issues or outages
+  - **ping**: Confirms basic network connectivity to the target host, showing packet loss and latency issues
+  - **traceroute**: Maps the full network path to the target, revealing routing problems or bottlenecks
+  - **curl**: Examines the server's response headers to identify server-side issues, redirects, or content delivery problems
 - Detailed logging with timestamps
 - Customizable log file location
 - Command-line options for all parameters
 - Pre-flight dependency checks
 - Clear error reporting with specific exit codes
+
 
 ## Prerequisites
 
